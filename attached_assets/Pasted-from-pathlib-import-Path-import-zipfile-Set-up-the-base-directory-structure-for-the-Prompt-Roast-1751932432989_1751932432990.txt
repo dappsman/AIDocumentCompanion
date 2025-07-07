@@ -1,0 +1,115 @@
+from pathlib import Path
+import zipfile
+
+# Set up the base directory structure for the "Prompt Roast" starter project
+base_dir = Path("/mnt/data/prompt-roast")
+(base_dir / "components").mkdir(parents=True, exist_ok=True)
+(base_dir / "pages").mkdir(parents=True, exist_ok=True)
+(base_dir / "styles").mkdir(parents=True, exist_ok=True)
+(base_dir / "public").mkdir(parents=True, exist_ok=True)
+
+# Create basic files with starter content
+(base_dir / "pages" / "index.tsx").write_text("""
+import Head from 'next/head';
+import PromptRoast from '../components/PromptRoast';
+
+export default function Home() {
+  return (
+    <>
+      <Head>
+        <title>Prompt Roast</title>
+      </Head>
+      <main className="min-h-screen bg-black text-white p-4">
+        <h1 className="text-4xl font-bold mb-6">🔥 Prompt Roast</h1>
+        <PromptRoast />
+      </main>
+    </>
+  );
+}
+""")
+
+(base_dir / "components" / "PromptRoast.tsx").write_text("""
+export default function PromptRoast() {
+  const prompt = "Write a breakup letter to humanity from AI in the tone of a petty ex.";
+  return (
+    <div className="space-y-6">
+      <p className="italic text-gray-300">Prompt: {prompt}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gray-800 p-4 rounded">🤖 GPT: [Placeholder]</div>
+        <div className="bg-gray-800 p-4 rounded">🤖 Claude: [Placeholder]</div>
+        <div className="bg-gray-800 p-4 rounded">🤖 Gemini: [Placeholder]</div>
+      </div>
+      <p className="text-sm text-gray-400">Affiliate Stuff: <a href="#" className="underline">Try ChatGPT Pro</a></p>
+    </div>
+  );
+}
+""")
+
+(base_dir / "styles" / "globals.css").write_text("""
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: sans-serif;
+}
+""")
+
+(base_dir / "tailwind.config.js").write_text("""
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./pages/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+""")
+
+(base_dir / "postcss.config.js").write_text("""
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+""")
+
+(base_dir / "package.json").write_text("""
+{
+  "name": "prompt-roast",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.5",
+    "tailwindcss": "^3.0.7",
+    "typescript": "^4.5.4"
+  }
+}
+""")
+
+(base_dir / "README.md").write_text("""
+# Prompt Roast
+
+A sarcastic AI audit page built for roasting large language models. Built with Next.js and Tailwind CSS.
+""")
+
+(base_dir / "next.config.js").write_text("module.exports = { reactStrictMode: true }")
+
+# Zip it all
+zip_path = "/mnt/data/prompt-roast-starter.zip"
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+    for file_path in base_dir.rglob("*"):
+        zipf.write(file_path, file_path.relative_to(base_dir.parent))
+
+zip_path
