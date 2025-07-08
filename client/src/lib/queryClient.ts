@@ -5,7 +5,7 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: async ({ queryKey }) => {
         const [url] = queryKey;
-        const response = await fetch(url);
+        const response = await fetch(url as string);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
