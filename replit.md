@@ -70,10 +70,11 @@ Prompt Roast is a full-stack JavaScript web application that compares AI respons
 
 ## Deployment Strategy
 
-- **Platform**: Suitable for Vercel, Netlify, or similar Next.js-friendly platforms
+- **Platform**: Replit Deployments (Autoscale) with Express.js serving static files
+- **Build Process**: Client builds to `client/dist`, server serves static files
 - **Environment Variables**: Required for AI API keys and database connections
-- **Static Generation**: Consider ISR (Incremental Static Regeneration) for popular prompts
-- **CDN**: Leverage Next.js built-in optimizations for static assets
+- **Port Configuration**: Single application serves on port 80 (deployment standard)
+- **Health Check**: `/health` endpoint for deployment monitoring
 
 ## User Preferences
 
@@ -92,9 +93,11 @@ Preferred communication style: Simple, everyday language.
 - ✅ Placeholder AI integration structure
 
 ### Running Instructions
-- **Server**: `cd server && tsx index.ts` (runs on port 3000)
-- **Frontend**: `cd client && vite --host 0.0.0.0 --port 5173` (runs on port 5173)
+- **Development**: `node start.js` (runs backend on port 3000, frontend on port 5173)
+- **Production**: `tsx server/index.ts` (single server on port 80 serving API + static files)
+- **Build**: `cd client && npm run build` (builds frontend to client/dist)
 - **API Endpoints**: Available at `/api/prompts`, `/api/responses`, etc.
+- **Health Check**: `/health` endpoint for deployment monitoring
 
 ### Next Steps for Production
 1. Integrate real AI APIs (OpenAI, Anthropic, Google)
@@ -105,6 +108,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
+- July 08, 2025: Deployment Configuration
+  - Fixed Express version compatibility (downgraded to 4.18.2)
+  - Added health check endpoint for deployment monitoring
+  - Configured single-server deployment (port 80)
+  - Set up client build process with proper path resolution
+  - Added production startup scripts
+  - Updated deployment strategy for Replit Autoscale
 - July 08, 2025: Complete full-stack implementation
   - Created React frontend with Vite
   - Built Express API with TypeScript
