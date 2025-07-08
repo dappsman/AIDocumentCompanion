@@ -46,7 +46,7 @@ export default function PromptDetail() {
   });
 
   const rateResponseMutation = useMutation({
-    mutationFn: ({ responseId, rating }: { responseId: string; rating: number }) =>
+    mutationFn: ({ responseId, rating }: { responseId: number; rating: number }) =>
       apiRequest(`/api/responses/${responseId}/rating`, {
         method: 'PATCH',
         body: JSON.stringify({ rating }),

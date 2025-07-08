@@ -18,7 +18,11 @@ export const routes = {
   async getPrompt(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const prompt = await storage.getPrompt(id);
+      const promptId = parseInt(id);
+      if (isNaN(promptId)) {
+        return res.status(400).json({ error: 'Invalid prompt ID' });
+      }
+      const prompt = await storage.getPrompt(promptId);
       if (!prompt) {
         return res.status(404).json({ error: 'Prompt not found' });
       }
@@ -46,7 +50,11 @@ export const routes = {
   async getAiResponses(req: Request, res: Response) {
     try {
       const { promptId } = req.params;
-      const responses = await storage.getAiResponses(promptId);
+      const promptIdNum = parseInt(promptId);
+      if (isNaN(promptIdNum)) {
+        return res.status(400).json({ error: 'Invalid prompt ID' });
+      }
+      const responses = await storage.getAiResponses(promptIdNum);
       res.json(responses);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch AI responses' });
@@ -73,11 +81,16 @@ export const routes = {
       const { id } = req.params;
       const { rating } = req.body;
       
+      const responseId = parseInt(id);
+      if (isNaN(responseId)) {
+        return res.status(400).json({ error: 'Invalid response ID' });
+      }
+      
       if (!rating || rating < 1 || rating > 5) {
         return res.status(400).json({ error: 'Rating must be between 1 and 5' });
       }
 
-      const response = await storage.updateAiResponseRating(id, rating);
+      const response = await storage.updateAiResponseRating(responseId, rating);
       if (!response) {
         return res.status(404).json({ error: 'AI response not found' });
       }
@@ -91,7 +104,11 @@ export const routes = {
   async generateAiResponses(req: Request, res: Response) {
     try {
       const { promptId } = req.params;
-      const prompt = await storage.getPrompt(promptId);
+      const promptIdNum = parseInt(promptId);
+      if (isNaN(promptIdNum)) {
+        return res.status(400).json({ error: 'Invalid prompt ID' });
+      }
+      const prompt = await storage.getPrompt(promptIdNum);
       
       if (!prompt) {
         return res.status(404).json({ error: 'Prompt not found' });
@@ -106,7 +123,7 @@ export const routes = {
         const mockResponse = `[${provider.toUpperCase()} Response] This is a placeholder response to: "${prompt.text}". Real AI integration coming soon!`;
         
         const aiResponse = await storage.createAiResponse({
-          promptId,
+          promptId: promptIdNum,
           provider,
           response: mockResponse
         });

@@ -1,32 +1,45 @@
-import { z } from 'zod';
+import { pgTable, text, integer, timestamp, serial } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 
-// Define the data model for prompts and AI responses
-export const promptSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  category: z.string().optional(),
-  createdAt: z.date(),
+// Define the database tables
+export const prompts = pgTable('prompts', {
+  id: serial('id').primaryKey(),
+  text: text('text').notNull(),
+  category: text('category'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const aiResponseSchema = z.object({
-  id: z.string(),
-  promptId: z.string(),
-  provider: z.enum(['gpt', 'claude', 'gemini']),
-  response: z.string(),
-  rating: z.number().min(1).max(5).optional(),
-  createdAt: z.date(),
+export const aiResponses = pgTable('ai_responses', {
+  id: serial('id').primaryKey(),
+  promptId: integer('prompt_id').references(() => prompts.id).notNull(),
+  provider: text('provider', { enum: ['gpt', 'claude', 'gemini'] }).notNull(),
+  response: text('response').notNull(),
+  rating: integer('rating'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// Define relations
+export const promptsRelations = relations(prompts, ({ many }) => ({
+  aiResponses: many(aiResponses),
+}));
+
+export const aiResponsesRelations = relations(aiResponses, ({ one }) => ({
+  prompt: one(prompts, {
+    fields: [aiResponses.promptId],
+    references: [prompts.id],
+  }),
+}));
 
 // Insert schemas (omitting auto-generated fields)
-export const insertPromptSchema = promptSchema.omit({ id: true, createdAt: true });
-export const insertAiResponseSchema = aiResponseSchema.omit({ id: true, createdAt: true });
+export const insertPromptSchema = createInsertSchema(prompts).omit({ id: true, createdAt: true });
+export const insertAiResponseSchema = createInsertSchema(aiResponses).omit({ id: true, createdAt: true });
 
 // Types
-export type Prompt = z.infer<typeof promptSchema>;
-export type AiResponse = z.infer<typeof aiResponseSchema>;
-export type InsertPrompt = z.infer<typeof insertPromptSchema>;
-export type InsertAiResponse = z.infer<typeof insertAiResponseSchema>;
+export type Prompt = typeof prompts.$inferSelect;
+export type AiResponse = typeof aiResponses.$inferSelect;
+export type InsertPrompt = typeof insertPromptSchema._input;
+export type InsertAiResponse = typeof insertAiResponseSchema._input;
 
 // Pre-defined creative prompts for the roast platform
 export const defaultPrompts = [

@@ -1,65 +1,57 @@
-import { Prompt, AiResponse, InsertPrompt, InsertAiResponse } from '@shared/schema';
+import { Prompt, AiResponse, InsertPrompt, InsertAiResponse, prompts, aiResponses } from '@shared/schema';
+import { db } from './db';
+import { eq } from 'drizzle-orm';
 
 export interface IStorage {
   // Prompt operations
   createPrompt(prompt: InsertPrompt): Promise<Prompt>;
   getPrompts(): Promise<Prompt[]>;
-  getPrompt(id: string): Promise<Prompt | null>;
+  getPrompt(id: number): Promise<Prompt | null>;
   
   // AI Response operations
   createAiResponse(response: InsertAiResponse): Promise<AiResponse>;
-  getAiResponses(promptId: string): Promise<AiResponse[]>;
-  updateAiResponseRating(id: string, rating: number): Promise<AiResponse | null>;
+  getAiResponses(promptId: number): Promise<AiResponse[]>;
+  updateAiResponseRating(id: number, rating: number): Promise<AiResponse | null>;
 }
 
-export class MemStorage implements IStorage {
-  private prompts: Prompt[] = [];
-  private aiResponses: AiResponse[] = [];
-  private promptIdCounter = 1;
-  private responseIdCounter = 1;
-
+export class DatabaseStorage implements IStorage {
   async createPrompt(prompt: InsertPrompt): Promise<Prompt> {
-    const newPrompt: Prompt = {
-      id: this.promptIdCounter.toString(),
-      ...prompt,
-      createdAt: new Date(),
-    };
-    this.promptIdCounter++;
-    this.prompts.push(newPrompt);
+    const [newPrompt] = await db
+      .insert(prompts)
+      .values(prompt)
+      .returning();
     return newPrompt;
   }
 
   async getPrompts(): Promise<Prompt[]> {
-    return [...this.prompts];
+    return await db.select().from(prompts);
   }
 
-  async getPrompt(id: string): Promise<Prompt | null> {
-    return this.prompts.find(p => p.id === id) || null;
+  async getPrompt(id: number): Promise<Prompt | null> {
+    const [prompt] = await db.select().from(prompts).where(eq(prompts.id, id));
+    return prompt || null;
   }
 
   async createAiResponse(response: InsertAiResponse): Promise<AiResponse> {
-    const newResponse: AiResponse = {
-      id: this.responseIdCounter.toString(),
-      ...response,
-      createdAt: new Date(),
-    };
-    this.responseIdCounter++;
-    this.aiResponses.push(newResponse);
+    const [newResponse] = await db
+      .insert(aiResponses)
+      .values(response)
+      .returning();
     return newResponse;
   }
 
-  async getAiResponses(promptId: string): Promise<AiResponse[]> {
-    return this.aiResponses.filter(r => r.promptId === promptId);
+  async getAiResponses(promptId: number): Promise<AiResponse[]> {
+    return await db.select().from(aiResponses).where(eq(aiResponses.promptId, promptId));
   }
 
-  async updateAiResponseRating(id: string, rating: number): Promise<AiResponse | null> {
-    const response = this.aiResponses.find(r => r.id === id);
-    if (response) {
-      response.rating = rating;
-      return response;
-    }
-    return null;
+  async updateAiResponseRating(id: number, rating: number): Promise<AiResponse | null> {
+    const [updatedResponse] = await db
+      .update(aiResponses)
+      .set({ rating })
+      .where(eq(aiResponses.id, id))
+      .returning();
+    return updatedResponse || null;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
