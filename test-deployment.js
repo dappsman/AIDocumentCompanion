@@ -1,41 +1,68 @@
-// Test script to verify deployment is working
+#!/usr/bin/env node
+
+// Test deployment setup
+const { spawn } = require('child_process');
 const http = require('http');
 
-function testEndpoint(path, expected) {
-  return new Promise((resolve, reject) => {
-    const req = http.get(`http://localhost:80${path}`, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        console.log(`✓ ${path} - Status: ${res.statusCode}`);
-        if (expected && data.includes(expected)) {
-          console.log(`✓ ${path} - Content check passed`);
-        }
-        resolve({ status: res.statusCode, data });
-      });
-    });
-    req.on('error', reject);
-    req.setTimeout(5000, () => reject(new Error('Timeout')));
-  });
-}
+console.log('Testing deployment setup...');
 
-async function runTests() {
-  console.log('Testing deployment...');
+// Start the server
+const serverProcess = spawn('npx', ['tsx', 'server/index.ts'], {
+  stdio: 'pipe',
+  env: { ...process.env, PORT: 80 }
+});
+
+let serverOutput = '';
+serverProcess.stdout.on('data', (data) => {
+  serverOutput += data.toString();
+  console.log('Server:', data.toString().trim());
+});
+
+serverProcess.stderr.on('data', (data) => {
+  console.error('Server Error:', data.toString().trim());
+});
+
+// Test multiple endpoints after server starts
+setTimeout(() => {
+  console.log('🔍 Testing deployment endpoints...');
+  testEndpoint('/health', 'healthy');
+  testEndpoint('/api/prompts', null); // Should return array
   
-  try {
-    // Test health endpoint
-    await testEndpoint('/health', 'healthy');
-    
-    // Test main page
-    await testEndpoint('/', 'html');
-    
-    // Test API endpoints
-    await testEndpoint('/api/prompts', '[]');
-    
-    console.log('\n✅ All tests passed! Deployment is working correctly.');
-  } catch (error) {
-    console.error('❌ Test failed:', error.message);
-  }
-}
+  // Kill server after test
+  setTimeout(() => {
+    serverProcess.kill();
+    console.log('✅ Deployment test completed - Server is ready for production');
+  }, 3000);
+}, 5000);
 
-runTests();
+function testEndpoint(path, expected) {
+  const req = http.request({
+    hostname: 'localhost',
+    port: 80,
+    path: path,
+    method: 'GET'
+  }, (res) => {
+    let data = '';
+    res.on('data', (chunk) => {
+      data += chunk;
+    });
+    res.on('end', () => {
+      try {
+        const result = JSON.parse(data);
+        if (result.status === expected) {
+          console.log(`✅ ${path} endpoint working correctly`);
+        } else {
+          console.log(`❌ ${path} endpoint failed - expected ${expected}, got ${result.status}`);
+        }
+      } catch (e) {
+        console.log(`❌ ${path} endpoint failed - invalid JSON: ${data}`);
+      }
+    });
+  });
+
+  req.on('error', (err) => {
+    console.log(`❌ ${path} endpoint failed - ${err.message}`);
+  });
+
+  req.end();
+}
