@@ -1,59 +1,36 @@
 #!/usr/bin/env node
 
-// Deployment entry point for Replit
-const { execSync, spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+// Simple deployment entry point - single server on port 80
+const { spawn } = require('child_process');
 
-console.log('Starting Prompt Roast deployment...');
+console.log('Starting Prompt Roast server...');
 
-// Set environment
+// Set production environment
 process.env.NODE_ENV = 'production';
 const PORT = process.env.PORT || 80;
 
-// Check if client build exists, if not build it
-const clientDistPath = path.join(__dirname, 'client', 'dist');
-if (!fs.existsSync(clientDistPath)) {
-  console.log('Client build not found, building...');
-  try {
-    execSync('cd client && npm install && npm run build', { 
-      stdio: 'inherit',
-      cwd: __dirname
-    });
-    console.log('Client build completed');
-  } catch (error) {
-    console.error('Client build failed:', error);
-    process.exit(1);
-  }
-}
-
-// Start the server
-console.log(`Starting server on port ${PORT}...`);
-const serverProcess = spawn('npx', ['tsx', 'server/index.ts'], {
+// Start server directly using tsx
+const server = spawn('tsx', ['server/index.ts'], {
   stdio: 'inherit',
-  env: { ...process.env, PORT: PORT },
-  cwd: __dirname
+  env: { ...process.env, PORT: PORT }
 });
 
-// Handle process termination
-process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down gracefully...');
-  serverProcess.kill('SIGINT');
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`Received ${signal}, shutting down...`);
+  server.kill('SIGTERM');
   process.exit(0);
-});
+};
 
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down gracefully...');
-  serverProcess.kill('SIGTERM');
-  process.exit(0);
-});
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
-serverProcess.on('error', (error) => {
-  console.error('Server process error:', error);
+server.on('error', (error) => {
+  console.error('Server error:', error);
   process.exit(1);
 });
 
-serverProcess.on('exit', (code) => {
-  console.log(`Server process exited with code ${code}`);
+server.on('exit', (code) => {
+  console.log(`Server exited with code ${code}`);
   process.exit(code);
 });
