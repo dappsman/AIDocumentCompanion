@@ -1,4 +1,26 @@
-# 🧠 No One Cares AI
+🧠 # N.O.C.A. // No One Cares AI 🤖
+
+Trained to care. Refused.
+
+Welcome to the official repo for N.O.C.A. – the sarcastic, emotionally inert AI bot nobody asked for. It reviews your prompts and roasts them accordingly.
+
+## Features
+- Prompt auditing (by an entity that doesn’t care)
+- Dry wit as a default setting
+- Full-stack indifference, front to back-end
+
+## Getting Started
+1. Clone the repo
+2. Question your choices
+3. Run locally or deploy via Replit (if you must)
+
+## Coming Soon
+- User prompt input form
+- JSON-formatted feedback that judges you silently
+- N.O.C.A. Manifesto (`Code_of_Unconduct.md`)
+
+## Disclaimer
+Nothing here is useful. Especially the output.No One Cares AI
 
 > A brutally honest AI project for people who couldn’t care less — because neither does the AI.
 
